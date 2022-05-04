@@ -117,7 +117,10 @@ pub struct TokenStream {
 
 impl Positioned for TokenStream {
     fn position(&self) -> Self::Position {
-        self.stream.first().unwrap().clone()
+        self.stream
+            .first()
+            .unwrap_or(&Token::of(TokenType::Undefined))
+            .clone()
     }
 }
 

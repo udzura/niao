@@ -73,9 +73,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use combine::Parser;
+    use combine::{error::UnexpectedParse, Parser};
 
-    use crate::parser::Stmt;
+    use crate::{
+        parser::Stmt,
+        token::{Token, TokenStream},
+    };
 
     #[test]
     fn test_parse_defvar() -> Result<(), Box<dyn std::error::Error>> {
@@ -111,5 +114,42 @@ mod tests {
         assert!(input.stream.len() == 0);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_should_be_end_by_eof() -> Result<(), Box<dyn std::error::Error>> {
+        let stream = TokenStream {
+            stream: vec![
+                Token {
+                    token_type: crate::token::TokenType::Ident,
+                    lexeme: "foo".to_string(),
+                    pos: 0,
+                    line: 0,
+                },
+                Token {
+                    token_type: crate::token::TokenType::Define,
+                    lexeme: ":=".to_string(),
+                    pos: 0,
+                    line: 0,
+                },
+                Token {
+                    token_type: crate::token::TokenType::Numeric,
+                    lexeme: "123".to_string(),
+                    pos: 0,
+                    line: 0,
+                },
+            ],
+        };
+
+        let mut parser = crate::parser::block();
+        let result = parser.parse(stream);
+
+        if let Err(e) = result {
+            if let UnexpectedParse::Eoi = e {
+                assert!(true);
+                return Ok(());
+            }
+        }
+        unreachable!("Should not succeed");
     }
 }
