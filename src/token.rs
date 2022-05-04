@@ -1,36 +1,47 @@
-use combine::{
-    stream::{position::DefaultPositioned, ResetStream},
-    Positioned, Stream, StreamOnce,
-};
+use combine::{stream::ResetStream, Positioned, StreamOnce};
 
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
+    pub pos: usize,
     pub line: usize,
 }
 
 impl PartialEq for Token {
     fn eq(&self, other: &Self) -> bool {
-        use TokenType::*;
-        match self.token_type {
-            Numeric | StringLiteral | Ident | ConstIdent => {
-                self.token_type == other.token_type && self.lexeme == other.lexeme
-            }
-            _ => self.token_type == other.token_type,
-        }
+        self.token_type == other.token_type
     }
 
     fn ne(&self, other: &Self) -> bool {
         !(self.eq(other))
     }
 }
+impl Eq for Token {}
+
+impl PartialOrd for Token {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.pos.partial_cmp(&other.pos)
+    }
+}
+impl Ord for Token {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.pos.cmp(&other.pos)
+    }
+}
+
+impl Default for Token {
+    fn default() -> Self {
+        Self::new(TokenType::Undefined, "", 0, 0)
+    }
+}
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: impl Into<String>, line: usize) -> Self {
+    pub fn new(token_type: TokenType, lexeme: impl Into<String>, pos: usize, line: usize) -> Self {
         Self {
             token_type,
             lexeme: lexeme.into(),
+            pos,
             line,
         }
     }
@@ -39,6 +50,7 @@ impl Token {
         Self {
             token_type,
             lexeme: "".to_string(),
+            pos: 0,
             line: 0,
         }
     }
@@ -94,54 +106,18 @@ pub enum TokenType {
     ConstIdent,
 
     Eof,
-}
 
-#[derive(Debug, Copy, Clone)]
-pub struct TokenIndex(pub TokenType, pub usize);
-
-impl PartialEq for TokenIndex {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 == other.0
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        !(self.eq(other))
-    }
-}
-impl Eq for TokenIndex {}
-
-impl PartialOrd for TokenIndex {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.1.partial_cmp(&other.1)
-    }
-}
-impl Ord for TokenIndex {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.1.cmp(&other.1)
-    }
-}
-
-impl Default for TokenIndex {
-    fn default() -> Self {
-        Self(TokenType::At, Default::default())
-    }
-}
-
-impl TokenIndex {
-    pub fn of(tt: TokenType) -> Self {
-        Self(tt, 0)
-    }
+    Undefined,
 }
 
 #[derive(PartialEq, PartialOrd, Debug, Clone)]
 pub struct TokenStream {
-    pub stream: Vec<TokenIndex>,
-    pub current: usize,
+    pub stream: Vec<Token>,
 }
 
 impl Positioned for TokenStream {
     fn position(&self) -> Self::Position {
-        self.stream.get(self.current).unwrap().clone()
+        self.stream.first().unwrap().clone()
     }
 }
 
@@ -159,9 +135,9 @@ impl ResetStream for TokenStream {
 }
 
 impl<'a> StreamOnce for TokenStream {
-    type Token = TokenIndex;
-    type Range = Vec<TokenIndex>;
-    type Position = TokenIndex;
+    type Token = Token;
+    type Range = Vec<Token>;
+    type Position = Token;
     type Error = combine::error::UnexpectedParse;
 
     fn is_partial(&self) -> bool {

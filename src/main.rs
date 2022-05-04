@@ -1,14 +1,7 @@
 use std::io::{stdin, stdout, BufRead, BufReader, Write};
 
-use combine::{
-    stream::{
-        position::{self, Stream},
-        IteratorStream, SliceStream,
-    },
-    EasyParser, Parser,
-};
-
-use niao::{scanner::Scanner, token::TokenStream};
+use combine::Parser;
+use niao::scanner::Scanner;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut buf = BufReader::new(stdin());
@@ -35,11 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         let mut parser = niao::parser::block();
-        let tokens = scanner.token_indices();
-        let stream = TokenStream {
-            stream: tokens,
-            current: 0,
-        };
+        let stream = scanner.token_stream();
 
         let (result, input) = parser.parse(stream)?;
         dbg!(result);

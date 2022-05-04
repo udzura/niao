@@ -31,7 +31,7 @@ impl fmt::Display for ScanError {
 impl Error for ScanError {}
 
 use crate::token::Token;
-use crate::token::TokenIndex;
+use crate::token::TokenStream;
 use crate::token::TokenType;
 use crate::token::TokenType::*;
 
@@ -64,20 +64,14 @@ impl<'source> Scanner<'source> {
             self.scan_token()?;
         }
 
-        self.tokens.push(Token::new(Eof, "", self.line));
+        self.tokens.push(Token::new(Eof, "", self.start, self.line));
         Ok(self.tokens.len())
     }
 
-    pub fn token_types(&mut self) -> Vec<TokenType> {
-        self.tokens.iter().map(|tok| tok.token_type).collect()
-    }
-
-    pub fn token_indices(&mut self) -> Vec<TokenIndex> {
-        self.tokens
-            .iter()
-            .enumerate()
-            .map(|(i, tok)| TokenIndex(tok.token_type, i))
-            .collect()
+    pub fn token_stream(&mut self) -> TokenStream {
+        TokenStream {
+            stream: self.tokens.clone(),
+        }
     }
 
     fn scan_token(&mut self) -> Result<(), ScanError> {
@@ -295,7 +289,8 @@ impl<'source> Scanner<'source> {
 
     fn push_token(&mut self, token_type: TokenType) {
         let lexeme = &self.source[self.start..self.current];
-        self.tokens.push(Token::new(token_type, lexeme, self.line));
+        self.tokens
+            .push(Token::new(token_type, lexeme, self.start, self.line));
     }
 }
 
