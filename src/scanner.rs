@@ -31,6 +31,7 @@ impl fmt::Display for ScanError {
 impl Error for ScanError {}
 
 use crate::token::Token;
+use crate::token::TokenIndex;
 use crate::token::TokenType;
 use crate::token::TokenType::*;
 
@@ -65,6 +66,18 @@ impl<'source> Scanner<'source> {
 
         self.tokens.push(Token::new(Eof, "", self.line));
         Ok(self.tokens.len())
+    }
+
+    pub fn token_types(&mut self) -> Vec<TokenType> {
+        self.tokens.iter().map(|tok| tok.token_type).collect()
+    }
+
+    pub fn token_indices(&mut self) -> Vec<TokenIndex> {
+        self.tokens
+            .iter()
+            .enumerate()
+            .map(|(i, tok)| TokenIndex(tok.token_type, i))
+            .collect()
     }
 
     fn scan_token(&mut self) -> Result<(), ScanError> {
