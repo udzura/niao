@@ -9,7 +9,7 @@ mod stmt {
 
     #[test]
     fn test_parse_defvar() -> Result<(), Box<dyn std::error::Error>> {
-        let source = include_str!("../../testcase/defvar.ni");
+        let source = include_str!("../../testcase/defvar.ns");
         let mut scanner = crate::scanner::Scanner::new(source);
         scanner.scan()?;
 
@@ -88,7 +88,7 @@ mod expr {
 
     #[test]
     fn test_parse_basic_expr() -> Result<(), Box<dyn std::error::Error>> {
-        let source = include_str!("../../testcase/simple.ni");
+        let source = include_str!("../../testcase/simple.ns");
         let mut scanner = crate::scanner::Scanner::new(source);
         scanner.scan()?;
 
