@@ -23,19 +23,19 @@ mod stmt {
         if let Stmt::DefVar { ident, .. } = &stmts[0] {
             assert_eq!("foo", ident.lexeme);
         } else {
-            unreachable!("Parser failed");
+            unreachable!("Parser failed: {:?}", &stmts);
         }
 
         if let Stmt::DefVar { ident, .. } = &stmts[1] {
             assert_eq!("bar", ident.lexeme);
         } else {
-            unreachable!("Parser failed");
+            unreachable!("Parser failed: {:?}", &stmts);
         }
 
         if let Stmt::DefVar { ident, .. } = &stmts[2] {
             assert_eq!("buz", ident.lexeme);
         } else {
-            unreachable!("Parser failed");
+            unreachable!("Parser failed: {:?}", &stmts);
         }
 
         assert!(input.stream.len() == 0);
@@ -77,7 +77,7 @@ mod stmt {
                 return Ok(());
             }
         }
-        unreachable!("Should not succeed");
+        unreachable!("Should not succeed: {:?}", &result);
     }
 }
 
@@ -107,7 +107,7 @@ mod expr {
                     break;
                 }
             }
-            unreachable!("Should be parsed as expr")
+            unreachable!("Should be parsed as expr: {:?}", &stmts)
         }
 
         loop {
@@ -118,7 +118,7 @@ mod expr {
                     break;
                 }
             }
-            unreachable!("Should be parsed as expr")
+            unreachable!("Should be parsed as expr: {:?}", &stmts)
         }
 
         Ok(())
