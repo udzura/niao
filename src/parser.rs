@@ -1,5 +1,5 @@
 extern crate combine;
-use combine::{token, ParseError, Parser, Stream};
+use combine::{choice, token, ParseError, Parser, Stream};
 
 use crate::token::Token as NiaoToken;
 
@@ -28,6 +28,22 @@ pub enum Expr {
     Lit { literal: Box<NiaoToken> },
 }
 
+pub fn expr<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+
+    choice((
+        token(NiaoToken::of(StringLiteral)),
+        token(NiaoToken::of(Numeric)),
+    ))
+    .map(|expr| Expr::Lit {
+        literal: Box::new(expr),
+    })
+}
+
 pub fn stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
@@ -38,17 +54,14 @@ where
     (
         token(NiaoToken::of(Ident)),
         token(NiaoToken::of(Define)),
-        token(NiaoToken::of(Numeric)),
+        expr(),
     )
-        .map(|(ident, _, expr): (NiaoToken, NiaoToken, NiaoToken)| {
-            let expr = Expr::Lit {
-                literal: Box::new(expr),
-            };
-            Stmt::DefVar {
+        .map(
+            |(ident, _, expr): (NiaoToken, NiaoToken, Expr)| Stmt::DefVar {
                 ident: Box::new(ident),
                 expr: Box::new(expr),
-            }
-        })
+            },
+        )
 }
 
 pub fn stmts<Input>() -> impl combine::Parser<Input, Output = Vec<Stmt>>

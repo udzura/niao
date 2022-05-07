@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod basic {
+mod stmt {
     use combine::{error::UnexpectedParse, Parser};
 
     use crate::{
@@ -78,5 +78,49 @@ mod basic {
             }
         }
         unreachable!("Should not succeed");
+    }
+}
+
+#[cfg(test)]
+mod expr {
+    use crate::{parser::Expr, parser::Stmt, token::TokenType::*};
+    use combine::Parser;
+
+    #[test]
+    fn test_parse_basic_expr() -> Result<(), Box<dyn std::error::Error>> {
+        let source = include_str!("../../testcase/simple.ni");
+        let mut scanner = crate::scanner::Scanner::new(source);
+        scanner.scan()?;
+
+        let mut parser = crate::parser::block();
+        let stream = scanner.token_stream();
+
+        let (result, _) = parser.parse(stream)?;
+
+        let stmts = &result.statements;
+        assert!(stmts.len() == 2);
+        loop {
+            if let Stmt::DefVar { expr, .. } = &stmts[0] {
+                if let Expr::Lit { literal } = expr.as_ref() {
+                    assert_eq!(Numeric, literal.as_ref().token_type);
+                    assert_eq!("1234", literal.as_ref().lexeme);
+                    break;
+                }
+            }
+            unreachable!("Should be parsed as expr")
+        }
+
+        loop {
+            if let Stmt::DefVar { expr, .. } = &stmts[1] {
+                if let Expr::Lit { literal } = expr.as_ref() {
+                    assert_eq!(StringLiteral, literal.as_ref().token_type);
+                    assert_eq!("\"any\"", literal.as_ref().lexeme);
+                    break;
+                }
+            }
+            unreachable!("Should be parsed as expr")
+        }
+
+        Ok(())
     }
 }
