@@ -21,19 +21,19 @@ mod stmt {
         let stmts = &result.statements;
         assert!(stmts.len() == 3);
         if let Stmt::DefVar { ident, .. } = &stmts[0] {
-            assert_eq!("foo", ident.lexeme);
+            assert_eq!("foo", ident);
         } else {
             unreachable!("Parser failed: {:?}", &stmts);
         }
 
         if let Stmt::DefVar { ident, .. } = &stmts[1] {
-            assert_eq!("bar", ident.lexeme);
+            assert_eq!("bar", ident);
         } else {
             unreachable!("Parser failed: {:?}", &stmts);
         }
 
         if let Stmt::DefVar { ident, .. } = &stmts[2] {
-            assert_eq!("buz", ident.lexeme);
+            assert_eq!("buz", ident);
         } else {
             unreachable!("Parser failed: {:?}", &stmts);
         }
@@ -83,7 +83,7 @@ mod stmt {
 
 #[cfg(test)]
 mod expr {
-    use crate::{parser::Expr, parser::Stmt, token::TokenType::*};
+    use crate::{parser::Expr, parser::Stmt};
     use combine::Parser;
 
     #[test]
@@ -101,9 +101,8 @@ mod expr {
         assert!(stmts.len() == 2);
         loop {
             if let Stmt::DefVar { expr, .. } = &stmts[0] {
-                if let Expr::Lit { literal } = expr.as_ref() {
-                    assert_eq!(Numeric, literal.as_ref().token_type);
-                    assert_eq!("1234", literal.as_ref().lexeme);
+                if let Expr::NumLit { value } = expr.as_ref() {
+                    assert_eq!(1234, *value);
                     break;
                 }
             }
@@ -112,9 +111,8 @@ mod expr {
 
         loop {
             if let Stmt::DefVar { expr, .. } = &stmts[1] {
-                if let Expr::Lit { literal } = expr.as_ref() {
-                    assert_eq!(StringLiteral, literal.as_ref().token_type);
-                    assert_eq!("\"any\"", literal.as_ref().lexeme);
+                if let Expr::StrLit { value } = expr.as_ref() {
+                    assert_eq!("any", value);
                     break;
                 }
             }
