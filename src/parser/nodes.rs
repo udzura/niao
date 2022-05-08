@@ -96,8 +96,9 @@ pub enum IterMethod {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Void,
-    True,
-    False,
+    BoolLit {
+        value: bool,
+    },
     NumLit {
         value: isize,
     },

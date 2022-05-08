@@ -31,11 +31,59 @@ where
         })
 }
 
-fn expr_<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn tuple<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
+    (
+        token(NiaoToken::of(LDoubleBrace)),
+        sep_by(expr(), token(NiaoToken::of(Comma))),
+        token(NiaoToken::of(RDoubleBrace)),
+    )
+        .map(|(_, values, _)| Expr::TupleDef { values })
+}
+
+fn structdecl<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token(NiaoToken::of(ConstIdent)),
+        token(NiaoToken::of(LDoubleBrace)),
+        sep_by(expr(), token(NiaoToken::of(Comma))),
+        token(NiaoToken::of(RDoubleBrace)),
+    )
+        .map(|(name, _, values, _)| Expr::StructDef {
+            name: const_to_value(&name),
+            values,
+        })
+}
+
+fn unop<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    let ops = choice((
+        token(NiaoToken::of(Minus)),
+        token(NiaoToken::of(Bang)),
+        token(NiaoToken::of(Amp)),
+        token(NiaoToken::of(Aster)),
+    ));
+    (ops, expr_()).map(|(tok, expr): (NiaoToken, Expr)| Expr::UnOp {
+        op: tok.token_type,
+        operand: Box::new(expr),
+    })
+}
+
+parser! {
+    fn expr_[Input]() (Input) -> Expr
+    where [
+        Input: Stream<Token = NiaoToken>,
+        Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    ] {
     (
         choice((
             (
@@ -44,12 +92,17 @@ where
                 token(NiaoToken::of(RParen)),
             )
                 .map(|(_, ex, _): (_, Expr, _)| ex),
+            unop(),
+            token(NiaoToken::of(True)).map(|_| Expr::BoolLit { value: true }),
+            token(NiaoToken::of(False)).map(|_| Expr::BoolLit { value: false }),
             token(NiaoToken::of(StringLiteral)).map(|tok| Expr::StrLit {
                 value: stringlit_to_value(&tok),
             }),
             token(NiaoToken::of(Numeric)).map(|tok| Expr::NumLit {
                 value: number_to_value(&tok),
             }),
+            tuple(),
+            structdecl(),
             var(),
         )),
         optional(
@@ -68,6 +121,7 @@ where
             },
             None => exp,
         })
+    }
 }
 
 fn binop_muldiv<Input>() -> impl combine::Parser<Input, Output = Expr>
