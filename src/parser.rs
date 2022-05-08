@@ -5,7 +5,8 @@ pub use nodes::*;
 
 type NiaoToken = crate::token::Token;
 
-use crate::token::TokenType;
+//use crate::token::TokenType;
+use crate::token::TokenType::*;
 
 use combine::*;
 
@@ -14,7 +15,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
     (
         token(NiaoToken::of(Ident)),
         many(
@@ -36,8 +36,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
-
     choice((
         (
             token(NiaoToken::of(LParen)),
@@ -60,7 +58,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
     let op =
         choice((token(NiaoToken::of(Aster)), token(NiaoToken::of(Slash)))).map(|tok: NiaoToken| {
             move |lhs: Expr, rhs: Expr| Expr::BinOp {
@@ -77,7 +74,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
     let op =
         choice((token(NiaoToken::of(Plus)), token(NiaoToken::of(Minus)))).map(|tok: NiaoToken| {
             move |lhs: Expr, rhs: Expr| Expr::BinOp {
@@ -94,7 +90,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
     let op = choice((token(NiaoToken::of(Less)), token(NiaoToken::of(Greater)))).map(
         |tok: NiaoToken| {
             move |lhs: Expr, rhs: Expr| Expr::BinOp {
@@ -129,7 +124,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
     let op = token(NiaoToken::of(And)).map(|tok: NiaoToken| {
         move |lhs: Expr, rhs: Expr| Expr::BinOp {
             op: tok.token_type,
@@ -145,7 +139,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
     let op = token(NiaoToken::of(Or)).map(|tok: NiaoToken| {
         move |lhs: Expr, rhs: Expr| Expr::BinOp {
             op: tok.token_type,
@@ -166,25 +159,31 @@ parser! {
     }
 }
 
+pub fn declare<Input>() -> impl combine::Parser<Input, Output = Stmt>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    attempt((
+        token(NiaoToken::of(Ident)),
+        token(NiaoToken::of(Define)),
+        expr(),
+    ))
+    .map(
+        |(ident, _, expr): (NiaoToken, NiaoToken, Expr)| Stmt::DefVar {
+            ident: ident_to_value(&ident),
+            expr: Box::new(expr),
+        },
+    )
+}
+
 pub fn stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
-
     choice((
-        attempt((
-            token(NiaoToken::of(Ident)),
-            token(NiaoToken::of(Define)),
-            expr(),
-        ))
-        .map(
-            |(ident, _, expr): (NiaoToken, NiaoToken, Expr)| Stmt::DefVar {
-                ident: ident_to_value(&ident),
-                expr: Box::new(expr),
-            },
-        ),
+        declare(),
         expr().map(|expr| Stmt::Solo {
             expr: Box::new(expr),
         }),
@@ -204,7 +203,6 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    use crate::token::TokenType::*;
     (stmts(), token(NiaoToken::of(Eof))).map(|(v, _): (Vec<Stmt>, _)| Block {
         statements: v,
         retstmt: None,
@@ -213,7 +211,7 @@ where
 
 fn number_to_value(token: &NiaoToken) -> isize {
     match token.token_type {
-        TokenType::Numeric => token.lexeme[..].parse().unwrap(),
+        Numeric => token.lexeme[..].parse().unwrap(),
         _ => {
             unreachable!("Parser maybe has bug")
         }
@@ -222,7 +220,7 @@ fn number_to_value(token: &NiaoToken) -> isize {
 
 fn stringlit_to_value(token: &NiaoToken) -> String {
     match token.token_type {
-        TokenType::StringLiteral => {
+        StringLiteral => {
             let start = 1;
             let end = token.lexeme.len() - 1;
             token.lexeme[start..end].to_owned()
@@ -235,7 +233,7 @@ fn stringlit_to_value(token: &NiaoToken) -> String {
 
 fn ident_to_value(token: &NiaoToken) -> IdentValue {
     match token.token_type {
-        TokenType::Ident => token.lexeme[..].to_owned(),
+        Ident => token.lexeme[..].to_owned(),
         _ => {
             unreachable!("Parser maybe has bug")
         }
@@ -245,7 +243,7 @@ fn ident_to_value(token: &NiaoToken) -> IdentValue {
 #[allow(dead_code)]
 fn const_to_value(token: &NiaoToken) -> ConstValue {
     match token.token_type {
-        TokenType::ConstIdent => token.lexeme[..].to_owned(),
+        ConstIdent => token.lexeme[..].to_owned(),
         _ => {
             unreachable!("Parser maybe has bug")
         }
