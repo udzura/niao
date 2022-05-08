@@ -36,21 +36,38 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    choice((
-        (
-            token(NiaoToken::of(LParen)),
-            expr(),
-            token(NiaoToken::of(RParen)),
-        )
-            .map(|(_, ex, _): (_, Expr, _)| ex),
-        token(NiaoToken::of(StringLiteral)).map(|tok| Expr::StrLit {
-            value: stringlit_to_value(&tok),
-        }),
-        token(NiaoToken::of(Numeric)).map(|tok| Expr::NumLit {
-            value: number_to_value(&tok),
-        }),
-        var(),
-    ))
+    (
+        choice((
+            (
+                token(NiaoToken::of(LParen)),
+                expr(),
+                token(NiaoToken::of(RParen)),
+            )
+                .map(|(_, ex, _): (_, Expr, _)| ex),
+            token(NiaoToken::of(StringLiteral)).map(|tok| Expr::StrLit {
+                value: stringlit_to_value(&tok),
+            }),
+            token(NiaoToken::of(Numeric)).map(|tok| Expr::NumLit {
+                value: number_to_value(&tok),
+            }),
+            var(),
+        )),
+        optional(
+            (
+                token(NiaoToken::of(LParen)),
+                sep_by(expr(), token(NiaoToken::of(Comma))),
+                token(NiaoToken::of(RParen)),
+            )
+                .map(|(_, args, _)| args),
+        ),
+    )
+        .map(|(exp, parens)| match parens {
+            Some(args) => Expr::FunCall {
+                callee: Box::new(exp),
+                args,
+            },
+            None => exp,
+        })
 }
 
 pub fn binop_muldiv<Input>() -> impl combine::Parser<Input, Output = Expr>
