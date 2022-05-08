@@ -44,14 +44,14 @@ pub enum Stmt {
         members: Vec<IdentValue>,
     },
     DefFun {
-        name: Box<IdentValue>,
+        name: IdentValue,
         args: Vec<IdentValue>,
         block: Box<Block>,
     },
     Continue {},
     Break {},
     Annotation {
-        name: Box<IdentValue>,
+        name: IdentValue,
         args: Vec<AnnotLit>,
     },
 }

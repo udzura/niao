@@ -321,6 +321,69 @@ where
     choice((itermethod_step(), itermethod_range(), itermethod_while()))
 }
 
+pub fn fun<Input>() -> impl combine::Parser<Input, Output = Stmt>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token(NiaoToken::of(Fun)),
+        token(NiaoToken::of(Ident)),
+        token(NiaoToken::of(LParen)),
+        sep_by(
+            token(NiaoToken::of(Ident)).map(|i| ident_to_value(&i)),
+            token(NiaoToken::of(Comma)),
+        ),
+        token(NiaoToken::of(RParen)),
+        token(NiaoToken::of(LBrace)),
+        block(),
+        token(NiaoToken::of(RBrace)),
+    )
+        .map(|(_, name, _, args, _, _, blk, _)| Stmt::DefFun {
+            name: ident_to_value(&name),
+            args,
+            block: Box::new(blk),
+        })
+}
+
+pub fn annotation<Input>() -> impl combine::Parser<Input, Output = Stmt>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    let annotlit = choice((
+        token(NiaoToken::of(StringLiteral)),
+        token(NiaoToken::of(Numeric)),
+    ))
+    .map(|tok: NiaoToken| match tok.token_type {
+        StringLiteral => AnnotLit::Str(stringlit_to_value(&tok)),
+        Numeric => AnnotLit::Num(number_to_value(&tok)),
+        _ => unreachable!("Maybe parser has bug"),
+    });
+    (
+        token(NiaoToken::of(At)),
+        token(NiaoToken::of(Ident)),
+        optional(
+            (
+                token(NiaoToken::of(LParen)),
+                sep_by1(annotlit, token(NiaoToken::of(Comma))),
+                token(NiaoToken::of(RParen)),
+            )
+                .map(|(_, vec, _)| vec),
+        ),
+    )
+        .map(|(_, ident, args)| match args {
+            Some(args) => Stmt::Annotation {
+                name: ident_to_value(&ident),
+                args,
+            },
+            None => Stmt::Annotation {
+                name: ident_to_value(&ident),
+                args: vec![],
+            },
+        })
+}
+
 parser! {
     pub fn stmt[Input]() (Input) -> Stmt
     where [
@@ -332,6 +395,10 @@ parser! {
         assign(),
         if_stmt(),
         for_stmt(),
+        fun(),
+        token(NiaoToken::of(Continue)).map(|_| Stmt::Continue {  }),
+        token(NiaoToken::of(Break)).map(|_| Stmt::Break{  }),
+        annotation(),
         expr().map(|expr| Stmt::Solo {
             expr: Box::new(expr),
         }),
