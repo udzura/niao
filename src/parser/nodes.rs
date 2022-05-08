@@ -11,8 +11,8 @@ pub type ConstValue = String;
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct VarWithCaller {
-    name: IdentValue,
-    callers: Vec<IdentValue>,
+    pub name: IdentValue,
+    pub callers: Vec<IdentValue>,
 }
 
 #[allow(dead_code)]

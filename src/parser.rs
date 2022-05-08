@@ -9,6 +9,28 @@ use crate::token::TokenType;
 
 use combine::*;
 
+pub fn var<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+    (
+        token(NiaoToken::of(Ident)),
+        many(
+            (token(NiaoToken::of(Dot)), token(NiaoToken::of(Ident)))
+                .map(|(_, ident): (_, NiaoToken)| ident_to_value(&ident)),
+        ),
+    )
+        .map(|(tok, idents)| {
+            let name = ident_to_value(&tok);
+            let callers = idents;
+            Expr::Var {
+                value: VarWithCaller { name, callers },
+            }
+        })
+}
+
 pub fn expr_<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
@@ -29,6 +51,7 @@ where
         token(NiaoToken::of(Numeric)).map(|tok| Expr::NumLit {
             value: number_to_value(&tok),
         }),
+        var(),
     ))
 }
 
@@ -150,17 +173,22 @@ where
 {
     use crate::token::TokenType::*;
 
-    (
-        token(NiaoToken::of(Ident)),
-        token(NiaoToken::of(Define)),
-        expr(),
-    )
+    choice((
+        attempt((
+            token(NiaoToken::of(Ident)),
+            token(NiaoToken::of(Define)),
+            expr(),
+        ))
         .map(
             |(ident, _, expr): (NiaoToken, NiaoToken, Expr)| Stmt::DefVar {
                 ident: ident_to_value(&ident),
                 expr: Box::new(expr),
             },
-        )
+        ),
+        expr().map(|expr| Stmt::Solo {
+            expr: Box::new(expr),
+        }),
+    ))
 }
 
 pub fn stmts<Input>() -> impl combine::Parser<Input, Output = Vec<Stmt>>
