@@ -218,6 +218,92 @@ where
         })
 }
 
+pub fn for_stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token(NiaoToken::of(For)),
+        token(NiaoToken::of(Ident)),
+        itermethod(),
+        token(NiaoToken::of(LBrace)),
+        block(),
+        token(NiaoToken::of(RBrace)),
+    )
+        .map(|(_, ident, im, _, blk, _)| {
+            let foriter = ForIter {
+                varname: ident_to_value(&ident),
+                how: im,
+            };
+            Stmt::For {
+                iter: foriter,
+                block: Box::new(blk),
+            }
+        })
+}
+
+pub fn itermethod_step<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        attempt((token(NiaoToken::of(In)), token(NiaoToken::of(Step)))),
+        token(NiaoToken::of(LParen)),
+        expr(),
+        token(NiaoToken::of(Comma)),
+        expr(),
+        optional((token(NiaoToken::of(Comma)), expr()).map(|(_, expr)| expr)),
+        token(NiaoToken::of(RParen)),
+    )
+        .map(|(_, _, init, _, fini, step, _)| IterMethod::StepIter {
+            init: Box::new(init),
+            fini: Box::new(fini),
+            step: step.map(|e| Box::new(e)),
+        })
+}
+
+pub fn itermethod_range<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        attempt((token(NiaoToken::of(In)), token(NiaoToken::of(Range)))),
+        token(NiaoToken::of(LParen)),
+        expr(),
+        token(NiaoToken::of(RParen)),
+    )
+        .map(|(_, _, expr, _)| IterMethod::RangeIter {
+            expr: Box::new(expr),
+        })
+}
+
+pub fn itermethod_while<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token(NiaoToken::of(While)),
+        token(NiaoToken::of(LParen)),
+        expr(),
+        token(NiaoToken::of(RParen)),
+    )
+        .map(|(_, _, expr, _)| IterMethod::WhileIter {
+            expr: Box::new(expr),
+        })
+}
+
+pub fn itermethod<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    choice((itermethod_step(), itermethod_range(), itermethod_while()))
+}
+
 parser! {
     pub fn stmt[Input]() (Input) -> Stmt
     where [
@@ -228,6 +314,7 @@ parser! {
         declare(),
         assign(),
         if_stmt(),
+        for_stmt(),
         expr().map(|expr| Stmt::Solo {
             expr: Box::new(expr),
         }),

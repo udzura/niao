@@ -72,8 +72,8 @@ pub enum AnnotLit {
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct ForIter {
-    varname: IdentValue,
-    how: IterMethod,
+    pub varname: IdentValue,
+    pub how: IterMethod,
 }
 
 #[allow(dead_code)]
@@ -82,7 +82,7 @@ pub enum IterMethod {
     StepIter {
         init: Box<Expr>,
         fini: Box<Expr>,
-        step: Box<Expr>,
+        step: Option<Box<Expr>>,
     },
     RangeIter {
         expr: Box<Expr>,

@@ -33,7 +33,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match parser.parse(stream) {
             Ok((result, input)) => {
                 dbg!(result);
-                dbg!(input);
+                if input.stream.len() != 0 {
+                    eprintln!("[!!] Unprocessed tokens left:");
+                    dbg!(input);
+                }
             }
             Err(e) => {
                 dbg!(e);
