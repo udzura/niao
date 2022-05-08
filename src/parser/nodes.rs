@@ -27,7 +27,7 @@ pub enum Stmt {
         expr: Box<Expr>,
     },
     Assign {
-        ident: VarWithCaller,
+        ident: Box<Expr>,
         expr: Box<Expr>,
     },
     IfElse {

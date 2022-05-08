@@ -27,12 +27,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("{}: {:?}", i, tok);
         }
 
-        let mut parser = niao::parser::block();
+        let mut parser = niao::parser::chunk();
         let stream = scanner.token_stream();
 
-        let (result, input) = parser.parse(stream)?;
-        dbg!(result);
-        dbg!(input);
+        match parser.parse(stream) {
+            Ok((result, input)) => {
+                dbg!(result);
+                dbg!(input);
+            }
+            Err(e) => {
+                dbg!(e);
+            }
+        }
 
         line.clear();
     }

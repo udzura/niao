@@ -13,7 +13,7 @@ mod stmt {
         let mut scanner = crate::scanner::Scanner::new(source);
         scanner.scan()?;
 
-        let mut parser = crate::parser::block();
+        let mut parser = crate::parser::chunk();
         let stream = scanner.token_stream();
 
         let (result, input) = parser.parse(stream)?;
@@ -68,7 +68,7 @@ mod stmt {
             ],
         };
 
-        let mut parser = crate::parser::block();
+        let mut parser = crate::parser::chunk();
         let result = parser.parse(stream);
 
         if let Err(e) = result {

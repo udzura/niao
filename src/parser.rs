@@ -177,17 +177,62 @@ where
     )
 }
 
-pub fn stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
+pub fn assign<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
+    attempt((var(), token(NiaoToken::of(Assign)), expr())).map(|(var, _, expr): (Expr, _, Expr)| {
+        Stmt::Assign {
+            ident: Box::new(var),
+            expr: Box::new(expr),
+        }
+    })
+}
+
+pub fn if_stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token(NiaoToken::of(If)),
+        expr(),
+        token(NiaoToken::of(LBrace)),
+        block(),
+        token(NiaoToken::of(RBrace)),
+        optional(
+            (
+                token(NiaoToken::of(Else)),
+                token(NiaoToken::of(LBrace)),
+                block(),
+                token(NiaoToken::of(RBrace)),
+            )
+                .map(|(_, _, blk, _)| blk),
+        ),
+    )
+        .map(|(_, exp, _, ifblk, _, elseblk)| Stmt::IfElse {
+            condition: Box::new(exp),
+            ifblk: Box::new(ifblk),
+            elseblk: elseblk.map(|b| Box::new(b)),
+        })
+}
+
+parser! {
+    pub fn stmt[Input]() (Input) -> Stmt
+    where [
+        Input: Stream<Token = NiaoToken>,
+        Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    ] {
     choice((
         declare(),
+        assign(),
+        if_stmt(),
         expr().map(|expr| Stmt::Solo {
             expr: Box::new(expr),
         }),
     ))
+    }
 }
 
 pub fn stmts<Input>() -> impl combine::Parser<Input, Output = Vec<Stmt>>
@@ -203,10 +248,18 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    (stmts(), token(NiaoToken::of(Eof))).map(|(v, _): (Vec<Stmt>, _)| Block {
+    stmts().map(|v: Vec<Stmt>| Block {
         statements: v,
         retstmt: None,
     })
+}
+
+pub fn chunk<Input>() -> impl combine::Parser<Input, Output = Block>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (block(), token(NiaoToken::of(Eof))).map(|(v, _): (Block, _)| v)
 }
 
 fn number_to_value(token: &NiaoToken) -> isize {
