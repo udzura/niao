@@ -1,14 +1,15 @@
 extern crate combine;
 pub mod nodes;
+
 pub use nodes::*;
 
 type NiaoToken = crate::token::Token;
 
 use crate::token::TokenType;
 
-use combine::{choice, token, ParseError, Parser, Stream};
+use combine::{chainl1, choice, token, ParseError, Parser, Stream};
 
-pub fn expr<Input>() -> impl combine::Parser<Input, Output = Expr>
+pub fn expr_<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -23,6 +24,115 @@ where
             value: number_to_value(&tok),
         }),
     ))
+}
+
+pub fn binop_muldiv<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+    let op =
+        choice((token(NiaoToken::of(Aster)), token(NiaoToken::of(Slash)))).map(|tok: NiaoToken| {
+            move |lhs: Expr, rhs: Expr| Expr::BinOp {
+                op: tok.token_type,
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            }
+        });
+    chainl1(expr_(), op)
+}
+
+pub fn binop_plusminus<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+    let op =
+        choice((token(NiaoToken::of(Plus)), token(NiaoToken::of(Minus)))).map(|tok: NiaoToken| {
+            move |lhs: Expr, rhs: Expr| Expr::BinOp {
+                op: tok.token_type,
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            }
+        });
+    chainl1(binop_muldiv(), op)
+}
+
+pub fn binop_ltgt<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+    let op = choice((token(NiaoToken::of(Less)), token(NiaoToken::of(Greater)))).map(
+        |tok: NiaoToken| {
+            move |lhs: Expr, rhs: Expr| Expr::BinOp {
+                op: tok.token_type,
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            }
+        },
+    );
+    chainl1(binop_plusminus(), op)
+}
+
+pub fn binop_eql<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+    let op =
+        choice((token(NiaoToken::of(Eql)), token(NiaoToken::of(Neql)))).map(|tok: NiaoToken| {
+            move |lhs: Expr, rhs: Expr| Expr::BinOp {
+                op: tok.token_type,
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            }
+        });
+    chainl1(binop_ltgt(), op)
+}
+
+pub fn binop_and<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+    let op = token(NiaoToken::of(And)).map(|tok: NiaoToken| {
+        move |lhs: Expr, rhs: Expr| Expr::BinOp {
+            op: tok.token_type,
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
+        }
+    });
+    chainl1(binop_eql(), op)
+}
+
+pub fn binop_or<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    use crate::token::TokenType::*;
+    let op = token(NiaoToken::of(Or)).map(|tok: NiaoToken| {
+        move |lhs: Expr, rhs: Expr| Expr::BinOp {
+            op: tok.token_type,
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
+        }
+    });
+    chainl1(binop_and(), op)
+}
+
+pub fn expr<Input>() -> impl combine::Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    binop_or()
 }
 
 pub fn stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
