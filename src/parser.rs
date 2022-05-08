@@ -7,7 +7,7 @@ type NiaoToken = crate::token::Token;
 
 use crate::token::TokenType;
 
-use combine::{chainl1, choice, token, ParseError, Parser, Stream};
+use combine::*;
 
 pub fn expr_<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
@@ -17,6 +17,12 @@ where
     use crate::token::TokenType::*;
 
     choice((
+        (
+            token(NiaoToken::of(LParen)),
+            expr(),
+            token(NiaoToken::of(RParen)),
+        )
+            .map(|(_, ex, _): (_, Expr, _)| ex),
         token(NiaoToken::of(StringLiteral)).map(|tok| Expr::StrLit {
             value: stringlit_to_value(&tok),
         }),
@@ -127,12 +133,14 @@ where
     chainl1(binop_and(), op)
 }
 
-pub fn expr<Input>() -> impl combine::Parser<Input, Output = Expr>
-where
-    Input: Stream<Token = NiaoToken>,
-    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
-{
-    binop_or()
+parser! {
+    pub fn expr[Input]() (Input) -> Expr
+    where [
+        Input: Stream<Token = NiaoToken>,
+        Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    ] {
+        binop_or()
+    }
 }
 
 pub fn stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
