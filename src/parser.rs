@@ -10,7 +10,7 @@ use crate::token::TokenType::*;
 
 use combine::*;
 
-pub fn var<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn var<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -31,7 +31,7 @@ where
         })
 }
 
-pub fn expr_<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn expr_<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -70,7 +70,7 @@ where
         })
 }
 
-pub fn binop_muldiv<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn binop_muldiv<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -86,7 +86,7 @@ where
     chainl1(expr_(), op)
 }
 
-pub fn binop_plusminus<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn binop_plusminus<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -102,7 +102,7 @@ where
     chainl1(binop_muldiv(), op)
 }
 
-pub fn binop_ltgt<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn binop_ltgt<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -119,7 +119,7 @@ where
     chainl1(binop_plusminus(), op)
 }
 
-pub fn binop_eql<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn binop_eql<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -136,7 +136,7 @@ where
     chainl1(binop_ltgt(), op)
 }
 
-pub fn binop_and<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn binop_and<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -151,7 +151,7 @@ where
     chainl1(binop_eql(), op)
 }
 
-pub fn binop_or<Input>() -> impl combine::Parser<Input, Output = Expr>
+fn binop_or<Input>() -> impl combine::Parser<Input, Output = Expr>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -167,7 +167,7 @@ where
 }
 
 parser! {
-    pub fn expr[Input]() (Input) -> Expr
+    fn expr[Input]() (Input) -> Expr
     where [
         Input: Stream<Token = NiaoToken>,
         Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -176,7 +176,7 @@ parser! {
     }
 }
 
-pub fn declare<Input>() -> impl combine::Parser<Input, Output = Stmt>
+fn declare<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -194,7 +194,7 @@ where
     )
 }
 
-pub fn assign<Input>() -> impl combine::Parser<Input, Output = Stmt>
+fn assign<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -207,7 +207,7 @@ where
     })
 }
 
-pub fn if_stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
+fn if_stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -235,7 +235,7 @@ where
         })
 }
 
-pub fn for_stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
+fn for_stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -260,7 +260,7 @@ where
         })
 }
 
-pub fn itermethod_step<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+fn itermethod_step<Input>() -> impl combine::Parser<Input, Output = IterMethod>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -281,7 +281,7 @@ where
         })
 }
 
-pub fn itermethod_range<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+fn itermethod_range<Input>() -> impl combine::Parser<Input, Output = IterMethod>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -297,7 +297,7 @@ where
         })
 }
 
-pub fn itermethod_while<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+fn itermethod_while<Input>() -> impl combine::Parser<Input, Output = IterMethod>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -313,7 +313,7 @@ where
         })
 }
 
-pub fn itermethod<Input>() -> impl combine::Parser<Input, Output = IterMethod>
+fn itermethod<Input>() -> impl combine::Parser<Input, Output = IterMethod>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -321,7 +321,7 @@ where
     choice((itermethod_step(), itermethod_range(), itermethod_while()))
 }
 
-pub fn fun<Input>() -> impl combine::Parser<Input, Output = Stmt>
+fn fun<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -346,7 +346,7 @@ where
         })
 }
 
-pub fn structdef<Input>() -> impl combine::Parser<Input, Output = Stmt>
+fn structdef<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -367,7 +367,7 @@ where
         })
 }
 
-pub fn annotation<Input>() -> impl combine::Parser<Input, Output = Stmt>
+fn annotation<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -406,7 +406,7 @@ where
 }
 
 parser! {
-    pub fn stmt[Input]() (Input) -> Stmt
+    fn stmt[Input]() (Input) -> Stmt
     where [
         Input: Stream<Token = NiaoToken>,
         Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -428,7 +428,7 @@ parser! {
     }
 }
 
-pub fn stmts<Input>() -> impl combine::Parser<Input, Output = Vec<Stmt>>
+fn stmts<Input>() -> impl combine::Parser<Input, Output = Vec<Stmt>>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -436,7 +436,7 @@ where
     combine::many1(stmt())
 }
 
-pub fn block<Input>() -> impl combine::Parser<Input, Output = Block>
+fn block<Input>() -> impl combine::Parser<Input, Output = Block>
 where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
