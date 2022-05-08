@@ -346,6 +346,27 @@ where
         })
 }
 
+pub fn structdef<Input>() -> impl combine::Parser<Input, Output = Stmt>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token(NiaoToken::of(Struct)),
+        token(NiaoToken::of(ConstIdent)),
+        token(NiaoToken::of(LDoubleBrace)),
+        sep_by(
+            token(NiaoToken::of(Ident)).map(|i| ident_to_value(&i)),
+            token(NiaoToken::of(Comma)),
+        ),
+        token(NiaoToken::of(RDoubleBrace)),
+    )
+        .map(|(_, name, _, members, _)| Stmt::DefStruct {
+            name: const_to_value(&name),
+            members,
+        })
+}
+
 pub fn annotation<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
@@ -396,6 +417,7 @@ parser! {
         if_stmt(),
         for_stmt(),
         fun(),
+        structdef(),
         token(NiaoToken::of(Continue)).map(|_| Stmt::Continue {  }),
         token(NiaoToken::of(Break)).map(|_| Stmt::Break{  }),
         annotation(),
