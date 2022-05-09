@@ -1,11 +1,9 @@
-extern crate combine;
 pub mod nodes;
 
 pub use nodes::*;
 
 type NiaoToken = crate::token::Token;
 
-//use crate::token::TokenType;
 use crate::{token::TokenType::*, types::Type};
 
 use combine::*;
@@ -573,7 +571,6 @@ fn ident_to_value(token: &NiaoToken) -> IdentValue {
     }
 }
 
-#[allow(dead_code)]
 fn const_to_value(token: &NiaoToken) -> ConstValue {
     match token.token_type {
         ConstIdent => token.lexeme[..].to_owned(),

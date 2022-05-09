@@ -3,17 +3,17 @@ use std::fmt;
 
 #[derive(Debug)]
 pub struct ScanError {
-    start: usize,
-    current: usize,
+    len: usize,
     line: usize,
+    offset_from_line_head: usize,
 }
 
 impl ScanError {
     pub fn raise(s: &Scanner) -> Self {
         Self {
-            start: s.start,
-            current: s.current,
+            len: s.current - s.start,
             line: s.line,
+            offset_from_line_head: s.offset_from_line_head,
         }
     }
 }
@@ -22,8 +22,10 @@ impl fmt::Display for ScanError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "ScanError at {}..{} (line %{})",
-            self.start, self.current, self.line
+            "ScanError at line {}:{}..{})",
+            self.line,
+            self.offset_from_line_head,
+            self.offset_from_line_head + self.len,
         )
     }
 }
@@ -43,6 +45,7 @@ pub struct Scanner<'source> {
     start: usize,
     current: usize,
     line: usize,
+    offset_from_line_head: usize,
     // current_index: usize,
     // needs context?
 }
@@ -56,6 +59,7 @@ impl<'source> Scanner<'source> {
             start: 0,
             current: 0,
             line: 1,
+            offset_from_line_head: 0,
         }
     }
 
@@ -65,7 +69,13 @@ impl<'source> Scanner<'source> {
             self.scan_token()?;
         }
 
-        self.push(Token::new(Eof, "", self.start, self.line));
+        self.push(Token::new(
+            Eof,
+            "",
+            self.start,
+            self.line,
+            self.offset_from_line_head,
+        ));
         Ok(self.tokens.len())
     }
 
@@ -147,6 +157,7 @@ impl<'source> Scanner<'source> {
             }
             '\n' => {
                 self.line += 1;
+                self.offset_from_line_head = 0;
             }
             '"' => {
                 self.string('"')?;
@@ -277,6 +288,7 @@ impl<'source> Scanner<'source> {
     fn advance(&mut self) -> Result<char, ScanError> {
         let c = self.getchar(self.current as usize)?;
         self.current += 1;
+        self.offset_from_line_head += 1;
         Ok(c)
     }
 
@@ -290,6 +302,7 @@ impl<'source> Scanner<'source> {
         }
 
         self.current += 1;
+        self.offset_from_line_head += 1;
         Ok(true)
     }
 
@@ -322,12 +335,24 @@ impl<'source> Scanner<'source> {
 
     fn push_token(&mut self, token_type: TokenType) {
         let lexeme = &self.source[self.start..self.current];
-        self.push(Token::new(token_type, lexeme, self.start, self.line));
+        self.push(Token::new(
+            token_type,
+            lexeme,
+            self.start,
+            self.line,
+            self.offset_from_line_head,
+        ));
     }
 
     fn push_type_token(&mut self, ty: Type) {
         let lexeme = &self.source[self.start..self.current];
-        self.push(Token::newtype(ty, lexeme, self.start, self.line));
+        self.push(Token::newtype(
+            ty,
+            lexeme,
+            self.start,
+            self.line,
+            self.offset_from_line_head,
+        ));
     }
 
     fn push(&mut self, token: Token) {

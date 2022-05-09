@@ -8,6 +8,7 @@ pub struct Token {
     pub lexeme: String,
     pub pos: usize,
     pub line: usize,
+    pub offset_from_line_head: usize,
     pub ty: Option<Type>,
 }
 
@@ -35,27 +36,45 @@ impl Ord for Token {
 
 impl Default for Token {
     fn default() -> Self {
-        Self::new(TokenType::Undefined, "", 0, 0)
+        Self::new(TokenType::Undefined, "", 0, 0, 0)
     }
 }
 
 impl Token {
-    pub fn new(token_type: TokenType, lexeme: impl Into<String>, pos: usize, line: usize) -> Self {
+    pub fn new(
+        token_type: TokenType,
+        lexeme: impl Into<String>,
+        pos: usize,
+        line: usize,
+        offset_from_line_head: usize,
+    ) -> Self {
+        let lexeme = lexeme.into();
+        let len = lexeme.len();
+        let offset_from_line_head = offset_from_line_head - len;
+
         Self {
             token_type,
-            lexeme: lexeme.into(),
+            lexeme,
             pos,
             line,
+            offset_from_line_head,
             ty: None,
         }
     }
 
-    pub fn newtype(ty: Type, lexeme: impl Into<String>, pos: usize, line: usize) -> Self {
+    pub fn newtype(
+        ty: Type,
+        lexeme: impl Into<String>,
+        pos: usize,
+        line: usize,
+        offset_from_line_head: usize,
+    ) -> Self {
         Self {
             token_type: TokenType::Ty,
             lexeme: lexeme.into(),
             pos,
             line,
+            offset_from_line_head,
             ty: Some(ty),
         }
     }

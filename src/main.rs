@@ -1,6 +1,6 @@
 use std::io::{stdin, stdout, BufRead, BufReader, Write};
 
-use combine::{EasyParser, Parser};
+use combine::{EasyParser, ParseError};
 use niao::scanner::Scanner;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -16,7 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
         if line.ends_with("\\\n") {
             let all_len = line.len();
-            line.replace_range((all_len - 2)..all_len, " ");
+            line.replace_range((all_len - 2)..all_len, "\n");
             continue;
         }
 
@@ -39,7 +39,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
             Err(e) => {
-                dbg!(e);
+                use combine::easy::{Error, Info};
+                eprintln!("[!!] Parse error:");
+                eprintln!("     On Token = {:?}", e.position());
+                for err in e.errors.iter() {
+                    match err {
+                        Error::Expected(v) => {
+                            if let Info::Token(t) = v {
+                                eprintln!("     Expected token = {:?}", t.token_type);
+                            }
+                        }
+                        _ => {}
+                    }
+                }
             }
         }
 
