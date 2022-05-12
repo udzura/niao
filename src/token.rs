@@ -1,11 +1,14 @@
 use combine::{stream::ResetStream, Positioned, StreamOnce};
 
+use crate::types::Type;
+
 #[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
     pub pos: usize,
     pub line: usize,
+    pub ty: Option<Type>,
 }
 
 impl PartialEq for Token {
@@ -43,15 +46,24 @@ impl Token {
             lexeme: lexeme.into(),
             pos,
             line,
+            ty: None,
+        }
+    }
+
+    pub fn newtype(ty: Type, lexeme: impl Into<String>, pos: usize, line: usize) -> Self {
+        Self {
+            token_type: TokenType::Ty,
+            lexeme: lexeme.into(),
+            pos,
+            line,
+            ty: Some(ty),
         }
     }
 
     pub fn of(token_type: TokenType) -> Self {
         Self {
             token_type,
-            lexeme: "".to_string(),
-            pos: 0,
-            line: 0,
+            ..Default::default()
         }
     }
 }
@@ -104,6 +116,9 @@ pub enum TokenType {
     StringLiteral,
     Ident,
     ConstIdent,
+
+    // Types
+    Ty,
 
     Eof,
 

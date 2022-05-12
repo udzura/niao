@@ -34,6 +34,7 @@ use crate::token::Token;
 use crate::token::TokenStream;
 use crate::token::TokenType;
 use crate::token::TokenType::*;
+use crate::types::Type;
 
 #[derive(Debug)]
 pub struct Scanner<'source> {
@@ -64,7 +65,7 @@ impl<'source> Scanner<'source> {
             self.scan_token()?;
         }
 
-        self.tokens.push(Token::new(Eof, "", self.start, self.line));
+        self.push(Token::new(Eof, "", self.start, self.line));
         Ok(self.tokens.len())
     }
 
@@ -137,8 +138,7 @@ impl<'source> Scanner<'source> {
                 if self.test('=')? {
                     self.push_token(Define);
                 } else {
-                    eprintln!("unexpected character: {}", c);
-                    return Err(ScanError::raise(self));
+                    self.typelit()?;
                 }
             }
 
@@ -205,6 +205,39 @@ impl<'source> Scanner<'source> {
         }
 
         self.push_token(ConstIdent);
+        Ok(())
+    }
+
+    fn typelit(&mut self) -> Result<(), ScanError> {
+        while self.test(' ')? {
+            // advance
+        }
+        let mut is_ptr = false;
+        if self.test('*')? {
+            is_ptr = true;
+        }
+
+        // TODO: tuple
+        if is_alpha(self.peek()?) {
+            let name_start = self.current;
+            self.advance()?;
+            while is_alphanumeric(self.peek()?) {
+                self.advance()?;
+            }
+            let end = self.current;
+            let name = &self.source[name_start..end];
+
+            let base = Type::basic(name.to_string());
+            if is_ptr {
+                let ty = Type::pointer(base);
+                self.push_type_token(ty);
+            } else {
+                self.push_type_token(base);
+            }
+        } else {
+            eprintln!("unexpected character: {}", self.peek()?);
+            return Err(ScanError::raise(self));
+        }
         Ok(())
     }
 
@@ -289,8 +322,16 @@ impl<'source> Scanner<'source> {
 
     fn push_token(&mut self, token_type: TokenType) {
         let lexeme = &self.source[self.start..self.current];
-        self.tokens
-            .push(Token::new(token_type, lexeme, self.start, self.line));
+        self.push(Token::new(token_type, lexeme, self.start, self.line));
+    }
+
+    fn push_type_token(&mut self, ty: Type) {
+        let lexeme = &self.source[self.start..self.current];
+        self.push(Token::newtype(ty, lexeme, self.start, self.line));
+    }
+
+    fn push(&mut self, token: Token) {
+        self.tokens.push(token);
     }
 }
 
