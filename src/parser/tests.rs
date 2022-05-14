@@ -50,20 +50,17 @@ mod stmt {
                 Token {
                     token_type: crate::token::TokenType::Ident,
                     lexeme: "foo".to_string(),
-                    pos: 0,
-                    line: 0,
+                    ..Default::default()
                 },
                 Token {
                     token_type: crate::token::TokenType::Define,
                     lexeme: ":=".to_string(),
-                    pos: 0,
-                    line: 0,
+                    ..Default::default()
                 },
                 Token {
                     token_type: crate::token::TokenType::Numeric,
                     lexeme: "123".to_string(),
-                    pos: 0,
-                    line: 0,
+                    ..Default::default()
                 },
             ],
         };
