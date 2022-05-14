@@ -1,6 +1,6 @@
 use std::io::{stdin, stdout, BufRead, BufReader, Write};
 
-use combine::Parser;
+use combine::{EasyParser, Parser};
 use niao::scanner::Scanner;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut parser = niao::parser::chunk();
         let stream = scanner.token_stream();
 
-        match parser.parse(stream) {
+        match parser.easy_parse(stream) {
             Ok((result, input)) => {
                 dbg!(result);
                 if input.stream.len() != 0 {

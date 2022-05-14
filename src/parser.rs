@@ -267,7 +267,7 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     (
-        token(NiaoToken::of(Assign)),
+        token(NiaoToken::of(Ident)),
         optional(token(NiaoToken::of(Ty))),
     )
         .map(|(name, ty): (NiaoToken, Option<NiaoToken>)| {
