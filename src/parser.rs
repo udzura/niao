@@ -459,6 +459,16 @@ where
         })
 }
 
+fn ret<Input>() -> impl combine::Parser<Input, Output = RetStmt>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (token(NiaoToken::of(Return)), expr()).map(|(_, expr)| RetStmt {
+        value: Some(Box::new(expr)),
+    })
+}
+
 parser! {
     fn stmt[Input]() (Input) -> Stmt
     where [
@@ -487,7 +497,7 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    combine::many1(stmt())
+    combine::many(stmt())
 }
 
 fn block<Input>() -> impl combine::Parser<Input, Output = Block>
@@ -495,9 +505,9 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    stmts().map(|v: Vec<Stmt>| Block {
+    (stmts(), optional(ret())).map(|(v, ret)| Block {
         statements: v,
-        retstmt: None,
+        retstmt: ret,
     })
 }
 

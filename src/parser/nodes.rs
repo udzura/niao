@@ -59,7 +59,7 @@ pub enum Stmt {
 #[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct RetStmt {
-    value: Option<Box<Expr>>,
+    pub value: Option<Box<Expr>>,
 }
 
 #[allow(dead_code)]
