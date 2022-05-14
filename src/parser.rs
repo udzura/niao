@@ -485,8 +485,8 @@ where
     Input: Stream<Token = NiaoToken>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    (token(NiaoToken::of(Return)), expr()).map(|(_, expr)| RetStmt {
-        value: Some(Box::new(expr)),
+    (token(NiaoToken::of(Return)), optional(expr())).map(|(_, expr)| RetStmt {
+        value: expr.map(|expr| Box::new(expr)),
     })
 }
 
