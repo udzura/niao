@@ -6,7 +6,7 @@ pub use nodes::*;
 type NiaoToken = crate::token::Token;
 
 //use crate::token::TokenType;
-use crate::token::TokenType::*;
+use crate::{token::TokenType::*, types::Type};
 
 use combine::*;
 
@@ -261,6 +261,27 @@ where
     })
 }
 
+fn arg<Input>() -> impl combine::Parser<Input, Output = Arg>
+where
+    Input: Stream<Token = NiaoToken>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    (
+        token(NiaoToken::of(Assign)),
+        optional(token(NiaoToken::of(Ty))),
+    )
+        .map(|(name, ty): (NiaoToken, Option<NiaoToken>)| {
+            let ty = match ty.map(|ty| ty.ty.map(|t| t)).flatten() {
+                None => Type::Unknown,
+                Some(t) => t,
+            };
+            Arg {
+                name: ident_to_value(&name),
+                ty,
+            }
+        })
+}
+
 fn if_stmt<Input>() -> impl combine::Parser<Input, Output = Stmt>
 where
     Input: Stream<Token = NiaoToken>,
@@ -384,10 +405,7 @@ where
         token(NiaoToken::of(Fun)),
         token(NiaoToken::of(Ident)),
         token(NiaoToken::of(LParen)),
-        sep_by(
-            token(NiaoToken::of(Ident)).map(|i| ident_to_value(&i)),
-            token(NiaoToken::of(Comma)),
-        ),
+        sep_by(arg(), token(NiaoToken::of(Comma))),
         token(NiaoToken::of(RParen)),
         token(NiaoToken::of(LBrace)),
         block(),
@@ -396,6 +414,7 @@ where
         .map(|(_, name, _, args, _, _, blk, _)| Stmt::DefFun {
             name: ident_to_value(&name),
             args,
+            ret: Type::Void,
             block: Box::new(blk),
         })
 }
@@ -409,10 +428,7 @@ where
         token(NiaoToken::of(Struct)),
         token(NiaoToken::of(ConstIdent)),
         token(NiaoToken::of(LDoubleBrace)),
-        sep_by(
-            token(NiaoToken::of(Ident)).map(|i| ident_to_value(&i)),
-            token(NiaoToken::of(Comma)),
-        ),
+        sep_by(arg(), token(NiaoToken::of(Comma))),
         token(NiaoToken::of(RDoubleBrace)),
     )
         .map(|(_, name, _, members, _)| Stmt::DefStruct {

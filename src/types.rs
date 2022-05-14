@@ -6,6 +6,7 @@ pub enum Type {
     Tuple { members: Vec<Type> },
     NamedTuple { name: String, members: Vec<Type> },
     Pointer { contained: Box<Type> },
+    Unknown,
 }
 
 impl Type {

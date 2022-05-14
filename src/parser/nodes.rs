@@ -1,4 +1,4 @@
-use crate::token::TokenType;
+use crate::{token::TokenType, types::Type};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Block {
@@ -8,14 +8,13 @@ pub struct Block {
 
 pub type IdentValue = String;
 pub type ConstValue = String;
-#[allow(dead_code)]
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct VarWithCaller {
     pub name: IdentValue,
     pub callers: Vec<IdentValue>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Void,
@@ -41,11 +40,12 @@ pub enum Stmt {
     },
     DefStruct {
         name: ConstValue,
-        members: Vec<IdentValue>,
+        members: Vec<Arg>,
     },
     DefFun {
         name: IdentValue,
-        args: Vec<IdentValue>,
+        args: Vec<Arg>,
+        ret: Type,
         block: Box<Block>,
     },
     Continue {},
@@ -56,27 +56,29 @@ pub enum Stmt {
     },
 }
 
-#[allow(dead_code)]
+#[derive(Debug, Clone, PartialEq)]
+pub struct Arg {
+    pub name: IdentValue,
+    pub ty: Type,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct RetStmt {
     pub value: Option<Box<Expr>>,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum AnnotLit {
     Str(String),
     Num(isize),
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct ForIter {
     pub varname: IdentValue,
     pub how: IterMethod,
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum IterMethod {
     StepIter {
@@ -92,7 +94,6 @@ pub enum IterMethod {
     },
 }
 
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Void,
