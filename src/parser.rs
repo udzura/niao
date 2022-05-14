@@ -407,14 +407,21 @@ where
         token(NiaoToken::of(LParen)),
         sep_by(arg(), token(NiaoToken::of(Comma))),
         token(NiaoToken::of(RParen)),
+        optional(token(NiaoToken::of(Ty))).map(|ty: Option<NiaoToken>| {
+            let ty = ty.map(|t| t.ty).flatten();
+            match ty {
+                None => Type::Void,
+                Some(t) => t,
+            }
+        }),
         token(NiaoToken::of(LBrace)),
         block(),
         token(NiaoToken::of(RBrace)),
     )
-        .map(|(_, name, _, args, _, _, blk, _)| Stmt::DefFun {
+        .map(|(_, name, _, args, _, ret, _, blk, _)| Stmt::DefFun {
             name: ident_to_value(&name),
             args,
-            ret: Type::Void,
+            ret,
             block: Box::new(blk),
         })
 }
