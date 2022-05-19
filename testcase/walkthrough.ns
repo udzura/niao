@@ -1,0 +1,11 @@
+foo := 1
+
+struct Bar {{ x, y : int }}
+
+fun buz() {
+  return 1
+}
+
+fun buz2(a : string, b : i32) : string {
+  return "wwwwww"
+}

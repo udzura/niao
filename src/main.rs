@@ -1,4 +1,7 @@
-use std::io::{stdin, stdout, BufRead, BufReader, Write};
+use std::{
+    fs::File,
+    io::{stdin, stdout, BufRead, BufReader, Read, Write},
+};
 
 use clap::{self, Parser, Subcommand};
 use combine::{EasyParser, ParseError};
@@ -18,28 +21,41 @@ enum Command {
     Run { file: Option<String> },
 
     /// debug mode
-    Debug,
+    Debug { file: Option<String> },
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     match &cli.command {
-        Command::Debug => {
+        Command::Debug { file } => {
             let mut buf = BufReader::new(stdin());
             let mut line = String::new();
+            let mut skip_readline = false;
+
+            if let Some(file) = file {
+                let mut f = File::open(file)?;
+                f.read_to_string(&mut line)?;
+                skip_readline = true
+            }
+
             loop {
                 print!("> ");
                 stdout().flush()?;
 
-                let len = buf.read_line(&mut line)?;
-                if len == 0 {
-                    break;
-                }
-                if line.ends_with("\\\n") {
-                    let all_len = line.len();
-                    line.replace_range((all_len - 2)..all_len, "\n");
-                    continue;
+                if !skip_readline {
+                    let len = buf.read_line(&mut line)?;
+                    if len == 0 {
+                        break;
+                    }
+                    if line.ends_with("\\\n") {
+                        let all_len = line.len();
+                        line.replace_range((all_len - 2)..all_len, "\n");
+                        continue;
+                    }
+                } else {
+                    println!("!!load from file: {:}", file.as_ref().unwrap());
+                    skip_readline = false;
                 }
 
                 let mut scanner = Scanner::new(&line);
